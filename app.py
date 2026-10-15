@@ -194,6 +194,18 @@ def answer_question(question):
             return None
         return max(totals, key=totals.get)
 
+    # Count distinct customers, not order rows, for questions such as
+    # "How many different customers placed at least one paid order?"
+    asks_distinct_customers = (
+        "customer" in q
+        and any(w in q for w in ("different", "distinct", "unique"))
+    )
+    if asks_distinct_customers:
+        rows = selected
+        if "paid" in q or "paid order" in q or "paid orders" in q:
+            rows = [o for o in rows if str(o.get("status", "")).lower() == "paid"]
+        return len({str(o.get("customer", "")) for o in rows if o.get("customer")})
+
     if asks_order_count:
         if any(w in q for w in ("paid", "revenue", "sales")) and "all orders" not in q:
             selected = [o for o in selected if str(o.get("status", "")).lower() == "paid"]
